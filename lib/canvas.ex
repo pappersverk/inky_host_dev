@@ -46,6 +46,7 @@ defmodule InkyHostDev.Canvas do
 
   defp draw_pixel(dc, x, y, brushes, color) do
     brush = brushes[color]
+
     if brush != nil do
       :wxDC.setBrush(dc, brush)
       :wxDC.drawRectangle(dc, {x, y}, {x + 1, y + 1})
@@ -90,6 +91,7 @@ defmodule InkyHostDev.Canvas do
     {width, height} = state.size
 
     :wxDC.setPen(dc, :wxPen.new({255, 255, 255, 0}))
+
     for y <- 0..(height - 1),
         x <- 0..(width - 1),
         do: draw_pixel(dc, x, y, brushes, pixels[{x, y}])
