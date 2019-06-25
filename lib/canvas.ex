@@ -36,15 +36,10 @@ defmodule InkyHostDev.Canvas do
     {frame, state}
   end
 
-  @spec handle_call({:draw_pixels, any}, any, %{pixels: any}) :: {:reply, nil, %{pixels: any}}
-  def handle_call({:draw_pixels, pixels}, from, state = %{size: size}) do
+  def handle_call({:draw_pixels, pixels}, _from, state = %{size: size}) do
     {width, height} = size
     black_bits = PixelUtil.pixels_to_bits(pixels, width, height, 0, @color_map_black)
     accent_bits = PixelUtil.pixels_to_bits(pixels, width, height, 0, @color_map_accent)
-    handle_call({:draw_pixels, black_bits, accent_bits}, from, state)
-  end
-
-  def handle_call({:draw_pixels, black_bits, accent_bits}, _from, state) do
     state = %{state | black_bits: black_bits, accent_bits: accent_bits}
     {:reply, nil, state}
   end
@@ -55,17 +50,6 @@ defmodule InkyHostDev.Canvas do
     {:noreply, state}
   end
 
-  defp draw_pixel(_, _, _, _, nil) do
-  end
-
-  # defp draw_pixel(dc, x, y, brushes, color) do
-  #   brush = brushes[color]
-
-  #   :wxDC.setBrush(dc, brush)
-  #   :wxDC.setPen(dc, :wxPen.new({255, 255, 255, 0}))
-  #   :wxDC.drawRectangle(dc, {x, y}, {x + 1, y + 1})
-  # end
-
   defp draw_pixel(_, _, _, _, 0) do
 
   end
@@ -73,7 +57,7 @@ defmodule InkyHostDev.Canvas do
   defp draw_pixel(dc, width, height, i, 1) do
     x = rem(i, width)
     y = floor(i/height)-1
-    IO.puts("#{x},#{y}")
+    # IO.puts("#{x},#{y}")
     :wxDC.drawRectangle(dc, {x, y}, {x + 1, y + 1})
   end
 
@@ -132,10 +116,10 @@ defmodule InkyHostDev.Canvas do
       nil
     end)
 
-    # :wxDC.setBrush(dc, brushes.accent)
-    # Enum.map(Enum.with_index(for <<b::1 <- accent_bits>>, do: b), fn {b, index} ->
-    #   draw_pixel(dc, width, height, index, b)
-    # end)
+    :wxDC.setBrush(dc, brushes.accent)
+    Enum.map(Enum.with_index(for <<b::1 <- accent_bits>>, do: b), fn {b, index} ->
+      draw_pixel(dc, width, height, index, b)
+    end)
 
     # for y <- 0..(height - 1),
     #     x <- 0..(width - 1),
