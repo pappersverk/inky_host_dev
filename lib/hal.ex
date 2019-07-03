@@ -19,8 +19,8 @@ defmodule InkyHostDev.HAL do
   end
 
   @impl Inky.HAL
-  def handle_update(pixels, _push_policy, _state = %State{canvas_pid: canvas_pid}) do
-    GenServer.call(canvas_pid, {:draw_pixels, pixels})
+  def handle_update(pixels, border, _push_policy, _state = %State{canvas_pid: canvas_pid}) do
+    GenServer.call(canvas_pid, {:draw_pixels, pixels, border})
     :ok
   end
 end

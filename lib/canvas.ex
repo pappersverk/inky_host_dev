@@ -7,8 +7,12 @@ defmodule InkyHostDev.Canvas do
     :wx_object.start_link(__MODULE__, config, [])
   end
 
-  def init(%{size: size, accent: accent}) do
+  def init(%{size: base_size, accent: accent}) do
+    {width, height} = base_size
+
     wx = :wx.new()
+    # Allow room for a border
+    size = {width + 2, height + 2}
     frame = :wxFrame.new(wx, -1, @title, size: size)
     :wxWindow.setClientSize(frame, size)
     :wxFrame.connect(frame, :close_window)
@@ -20,19 +24,19 @@ defmodule InkyHostDev.Canvas do
     state = %{
       wx: wx,
       panel: panel,
-      size: size,
+      size: base_size,
       frame: frame,
       accent: accent,
-      pixels: %{}
+      pixels: %{},
+      border: nil
     }
 
     Process.send_after(self(), :refresh, 200)
     {frame, state}
   end
 
-  @spec handle_call({:draw_pixels, any}, any, %{pixels: any}) :: {:reply, nil, %{pixels: any}}
-  def handle_call({:draw_pixels, pixels}, _from, state) do
-    state = %{state | pixels: pixels}
+  def handle_call({:draw_pixels, pixels, border}, _from, state) do
+    state = %{state | pixels: pixels, border: border}
     {:reply, nil, state}
   end
 
@@ -53,6 +57,16 @@ defmodule InkyHostDev.Canvas do
     end
   end
 
+  defp draw_border(dc, width, height, brushes, border) do
+    for y <- [1, height + 1],
+        x <- 1..(width + 1),
+        do: draw_pixel(dc, x, y, brushes, border)
+
+    for x <- [1, width + 1],
+        y <- 1..(height + 1),
+        do: draw_pixel(dc, x, y, brushes, border)
+  end
+
   def handle_event({:wx, _, _, _, {:wxSize, :size, _size, _}}, state) do
     {:noreply, state}
   end
@@ -69,7 +83,8 @@ defmodule InkyHostDev.Canvas do
       panel: panel,
       frame: frame,
       accent: accent,
-      pixels: pixels
+      pixels: pixels,
+      border: border
     } = state
 
     # Must be created, even if not used.
@@ -77,24 +92,30 @@ defmodule InkyHostDev.Canvas do
 
     accent_brush_color =
       case accent do
-        :red -> {255, 0, 0}
-        :yellow -> {255, 255, 0}
+        :red -> {200, 0, 0}
+        :yellow -> {200, 200, 0}
         _ -> {0, 255, 0}
       end
+
+    accent_brush = :wxBrush.new(accent_brush_color)
 
     brushes = %{
       black: :wxBrush.new({0, 0, 0}),
       white: :wxBrush.new({255, 255, 255}),
-      accent: :wxBrush.new(accent_brush_color)
+      accent: accent_brush,
+      red: accent_brush,
+      yellow: accent_brush
     }
 
     {width, height} = state.size
 
     :wxDC.setPen(dc, :wxPen.new({255, 255, 255, 0}))
 
-    for y <- 0..(height - 1),
-        x <- 0..(width - 1),
-        do: draw_pixel(dc, x, y, brushes, pixels[{x, y}])
+    for y <- 1..height,
+        x <- 1..width,
+        do: draw_pixel(dc, x + 1, y + 1, brushes, pixels[{x, y}])
+
+    draw_border(dc, width, height, brushes, border)
 
     :wxWindow.show(frame)
 
