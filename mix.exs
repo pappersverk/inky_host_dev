@@ -4,14 +4,14 @@ defmodule InkyHostDev.MixProject do
   def project do
     [
       app: :inky_host_dev,
-      version: "0.0.1",
+      version: "1.0.0",
       elixir: "~> 1.8",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       package: [
         name: "inky_host_dev",
         description:
-          "A development convenience for the Inky eInk display library. Allows rendering a window with largely the same behavior as the Inky display during host development. Built with the Erlang wxWidgets to avoid additional dependencies.",
+          "A development convenience for the Inky eInk display library. Allows rendering a window with largely the same behavior as the Inky display during host development. Built with the Erlang wxWidgets minimize dependencies.",
         licenses: ["Apache-2.0"],
         links: %{"GitHub" => "https://github.com/pappersverk/inky_host_dev"}
       ]
